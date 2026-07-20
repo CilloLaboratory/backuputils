@@ -1,0 +1,16 @@
+Package: backuputils
+Title: Backup Utilities for AWS CLI Workflows
+Version: 0.0.0.9000
+Authors@R: 
+    person("Cillo", "Lab", email = "lab@example.org", role = c("aut", "cre"))
+Description: Provides a small interface around the AWS CLI for copying
+    local data to S3-compatible storage and verifying that uploads completed
+    successfully. The package is intended as a backbone for Cillo Lab backup
+    workflows and can be extended with depot-specific conventions over time.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Suggests:
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3

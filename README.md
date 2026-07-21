@@ -41,7 +41,8 @@ backup_fastqs(
 ```
 
 `backup_fastqs()` writes a tab-delimited run report by default, with one row
-per FASTQ file copied and verified.
+per FASTQ file copied and verified. It can take either a manifest file path or
+an in-memory `data.frame` with the same two columns.
 
 ## Requirements
 

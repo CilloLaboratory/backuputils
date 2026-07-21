@@ -4,11 +4,13 @@
 #' verifies each uploaded FASTQ by comparing the local file size against the
 #' remote object reported by `aws s3api head-object`.
 #'
-#' @param manifest Path to a tab-delimited text file with two columns:
-#'   local source path and remote S3 directory.
+#' @param manifest Either a path to a tab-delimited text file with two columns
+#'   or a two-column data frame. Column 1 must be the local source path and
+#'   column 2 must be the remote S3 directory.
 #' @param has_header Logical indicating whether the manifest includes a header
-#'   row. When `FALSE`, the function will still ignore a leading header row if
-#'   it looks like one.
+#'   row when `manifest` is a file. When `FALSE`, the function will still ignore
+#'   a leading header row if it looks like one. This argument is ignored for
+#'   data-frame inputs.
 #' @param profile Optional AWS profile name.
 #'
 #' @return A list with the parsed manifest and one verification result per row.
@@ -44,7 +46,7 @@ aws_verify_copy <- function(
   })
 
   list(
-    manifest = normalizePath(manifest, winslash = "/", mustWork = TRUE),
+    manifest = normalize_manifest_reference(manifest),
     plan = manifest_data,
     verifications = verifications
   )

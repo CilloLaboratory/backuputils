@@ -75,6 +75,23 @@ test_that("aws_copy parses headerless two-column manifests", {
   expect_identical(parsed$destination_dir[[1]], "s3://bucket/project/run-01")
 })
 
+test_that("read_copy_manifest accepts two-column data frames", {
+  source <- tempfile(fileext = ".fastq.gz")
+  on.exit(unlink(source), add = TRUE)
+  writeLines("seqdata", source)
+
+  manifest <- data.frame(
+    source = source,
+    destination_dir = "s3://bucket/project/run-01",
+    stringsAsFactors = FALSE
+  )
+
+  parsed <- read_copy_manifest(manifest)
+
+  expect_identical(parsed$source[[1]], source)
+  expect_identical(parsed$destination_dir[[1]], "s3://bucket/project/run-01")
+})
+
 test_that("prepare_copy_manifest appends source filename to destination directory", {
   source <- tempfile(fileext = ".fastq.gz")
   manifest <- tempfile(fileext = ".tsv")
@@ -121,6 +138,16 @@ test_that("backup_fastqs validates manifest path before shelling out", {
     backup_fastqs("missing-manifest.tsv"),
     "Manifest does not exist"
   )
+})
+
+test_that("normalize_manifest_reference marks data-frame inputs", {
+  manifest <- data.frame(
+    source = "/tmp/a.fastq.gz",
+    destination_dir = "s3://bucket/run",
+    stringsAsFactors = FALSE
+  )
+
+  expect_identical(normalize_manifest_reference(manifest), "<data.frame>")
 })
 
 test_that("resolve_backup_report_path validates explicit paths", {

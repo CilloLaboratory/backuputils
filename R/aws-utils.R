@@ -30,6 +30,19 @@ assert_existing_file <- function(path, what = "path") {
   }
 }
 
+assert_manifest_input <- function(manifest) {
+  if (is.data.frame(manifest)) {
+    return(invisible(NULL))
+  }
+
+  if (!is.character(manifest) || length(manifest) != 1L || !nzchar(manifest)) {
+    stop(
+      "`manifest` must be either a data.frame or a single non-empty file path.",
+      call. = FALSE
+    )
+  }
+}
+
 assert_s3_uri <- function(x) {
   if (!is.character(x) || length(x) != 1L || !grepl("^s3://[^/]+(/.*)?$", x)) {
     stop("`destination` must be a valid S3 URI such as `s3://bucket/key`.", call. = FALSE)
@@ -133,21 +146,40 @@ run_aws_command_interactive <- function(args) {
   result
 }
 
-read_copy_manifest <- function(path, has_header = FALSE) {
-  assert_existing_file(path, what = "manifest")
-
-  manifest <- utils::read.delim(
-    path,
-    header = isTRUE(has_header),
-    sep = "\t",
-    stringsAsFactors = FALSE,
-    quote = "",
-    comment.char = ""
-  )
-
-  if (!isTRUE(has_header) && nrow(manifest) > 0L && looks_like_manifest_header(manifest[1, , drop = FALSE])) {
-    manifest <- manifest[-1, , drop = FALSE]
+normalize_manifest_reference <- function(manifest) {
+  if (is.data.frame(manifest)) {
+    return("<data.frame>")
   }
+
+  normalizePath(manifest, winslash = "/", mustWork = TRUE)
+}
+
+coerce_manifest_data <- function(manifest, has_header = FALSE) {
+  assert_manifest_input(manifest)
+
+  if (is.data.frame(manifest)) {
+    manifest_data <- manifest
+  } else {
+    assert_existing_file(manifest, what = "manifest")
+    manifest_data <- utils::read.delim(
+      manifest,
+      header = isTRUE(has_header),
+      sep = "\t",
+      stringsAsFactors = FALSE,
+      quote = "",
+      comment.char = ""
+    )
+  }
+
+  if (!isTRUE(has_header) && nrow(manifest_data) > 0L && looks_like_manifest_header(manifest_data[1, , drop = FALSE])) {
+    manifest_data <- manifest_data[-1, , drop = FALSE]
+  }
+
+  manifest_data
+}
+
+read_copy_manifest <- function(manifest, has_header = FALSE) {
+  manifest <- coerce_manifest_data(manifest, has_header = has_header)
 
   if (ncol(manifest) != 2L) {
     stop("`manifest` must contain exactly two tab-delimited columns.", call. = FALSE)
@@ -178,8 +210,8 @@ read_copy_manifest <- function(path, has_header = FALSE) {
   manifest
 }
 
-prepare_copy_manifest <- function(path, has_header = FALSE) {
-  manifest <- read_copy_manifest(path, has_header = has_header)
+prepare_copy_manifest <- function(manifest, has_header = FALSE) {
+  manifest <- read_copy_manifest(manifest, has_header = has_header)
   manifest$destination <- vapply(
     seq_len(nrow(manifest)),
     function(i) s3_path_join(manifest$destination_dir[[i]], basename(manifest$source[[i]])),

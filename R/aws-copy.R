@@ -49,11 +49,13 @@ aws_sso_login <- function(profile, use_device_code = TRUE) {
 #' the target S3 directory. The local filename is appended to the target
 #' directory automatically.
 #'
-#' @param manifest Path to a tab-delimited text file with two columns:
-#'   local source path and remote S3 directory.
+#' @param manifest Either a path to a tab-delimited text file with two columns
+#'   or a two-column data frame. Column 1 must be the local source path and
+#'   column 2 must be the remote S3 directory.
 #' @param has_header Logical indicating whether the manifest includes a header
-#'   row. When `FALSE`, the function will still ignore a leading header row if
-#'   it looks like one.
+#'   row when `manifest` is a file. When `FALSE`, the function will still ignore
+#'   a leading header row if it looks like one. This argument is ignored for
+#'   data-frame inputs.
 #' @param profile Optional AWS profile name.
 #' @param extra_args Optional character vector of extra `aws s3 cp` arguments.
 #' @param dry_run Logical indicating whether to append `--dryrun`.
@@ -101,7 +103,7 @@ aws_copy <- function(
   })
 
   list(
-    manifest = normalizePath(manifest, winslash = "/", mustWork = TRUE),
+    manifest = normalize_manifest_reference(manifest),
     plan = manifest_data,
     uploads = uploads
   )
@@ -112,11 +114,13 @@ aws_copy <- function(
 #' Runs [aws_copy()] and then [aws_verify_copy()] against the same two-column
 #' manifest so the common FASTQ backup workflow can be executed in one call.
 #'
-#' @param manifest Path to a tab-delimited text file with two columns:
-#'   local source path and remote S3 directory.
+#' @param manifest Either a path to a tab-delimited text file with two columns
+#'   or a two-column data frame. Column 1 must be the local source path and
+#'   column 2 must be the remote S3 directory.
 #' @param has_header Logical indicating whether the manifest includes a header
-#'   row. When `FALSE`, the function will still ignore a leading header row if
-#'   it looks like one.
+#'   row when `manifest` is a file. When `FALSE`, the function will still ignore
+#'   a leading header row if it looks like one. This argument is ignored for
+#'   data-frame inputs.
 #' @param profile Optional AWS profile name.
 #' @param extra_args Optional character vector of extra `aws s3 cp` arguments.
 #' @param dry_run Logical indicating whether to append `--dryrun` during copy.

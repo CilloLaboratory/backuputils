@@ -13,8 +13,8 @@ backup_fastqs(
 )
 }
 \arguments{
-  \item{manifest}{Path to a tab-delimited text file with two columns: local source path and remote S3 directory.}
-  \item{has_header}{Logical indicating whether the manifest includes a header row.}
+  \item{manifest}{Either a path to a tab-delimited text file with two columns or a two-column data frame. Column 1 must be the local source path and column 2 must be the remote S3 directory.}
+  \item{has_header}{Logical indicating whether the manifest includes a header row when \code{manifest} is a file.}
   \item{profile}{Optional AWS profile name.}
   \item{extra_args}{Optional character vector of extra \code{aws s3 cp} arguments.}
   \item{dry_run}{Logical indicating whether to append \code{--dryrun} during copy.}
@@ -28,5 +28,6 @@ A list containing the upload results, verification results, and written report d
 Runs \code{\link{aws_copy}} and then \code{\link{aws_verify_copy}} against the
 same two-column manifest so the common FASTQ backup workflow can be executed in
 one call. A tab-delimited report with one row per FASTQ is written for audit
-and downstream parsing.
+and downstream parsing. The manifest can be supplied as either a file path or
+an in-memory data frame.
 }

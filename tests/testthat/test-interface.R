@@ -153,6 +153,45 @@ test_that("aws_copy places profile immediately after the destination path", {
   )
 })
 
+test_that("aws_copy reports FASTQ progress with file index and name", {
+  source1 <- tempfile(fileext = ".fastq.gz")
+  source2 <- tempfile(fileext = ".fastq.gz")
+  manifest <- tempfile(fileext = ".tsv")
+  on.exit(unlink(c(source1, source2, manifest)), add = TRUE)
+  writeLines("seqdata", source1)
+  writeLines("seqdata", source2)
+  writeLines(
+    c(
+      sprintf("%s\ts3://bucket/project/run-01", source1),
+      sprintf("%s\ts3://bucket/project/run-01", source2)
+    ),
+    manifest
+  )
+
+  aws_copy_env <- environment(aws_copy)
+  original_run_aws_command <- get("run_aws_command", envir = aws_copy_env)
+  assign(
+    "run_aws_command",
+    function(args) {
+      list(command = c("aws", args), status = 0L, stdout = character(), stderr = character())
+    },
+    envir = aws_copy_env
+  )
+  on.exit(
+    assign("run_aws_command", original_run_aws_command, envir = aws_copy_env),
+    add = TRUE
+  )
+
+  expect_message(
+    aws_copy(manifest, quiet = FALSE),
+    regexp = sprintf("Backing up FASTQ 1/2: %s", basename(source1))
+  )
+  expect_message(
+    aws_copy(manifest, quiet = FALSE),
+    regexp = sprintf("Backing up FASTQ 2/2: %s", basename(source2))
+  )
+})
+
 test_that("aws_copy tolerates a matching header row", {
   source <- tempfile(fileext = ".fastq.gz")
   manifest <- tempfile(fileext = ".tsv")

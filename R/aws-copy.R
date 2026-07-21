@@ -74,9 +74,17 @@ aws_copy <- function(
   quiet = TRUE
 ) {
   manifest_data <- prepare_copy_manifest(manifest, has_header = has_header)
+  total_uploads <- nrow(manifest_data)
   uploads <- lapply(seq_len(nrow(manifest_data)), function(i) {
     source <- manifest_data$source[[i]]
     destination <- manifest_data$destination[[i]]
+
+    message(sprintf(
+      "Backing up FASTQ %d/%d: %s",
+      i,
+      total_uploads,
+      basename(source)
+    ))
 
     args <- c("s3", "cp", normalizePath(source, winslash = "/", mustWork = TRUE), destination)
 

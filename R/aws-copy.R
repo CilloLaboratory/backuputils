@@ -80,16 +80,16 @@ aws_copy <- function(
 
     args <- c("s3", "cp", normalizePath(source, winslash = "/", mustWork = TRUE), destination)
 
+    if (!is.null(profile)) {
+      args <- c(args, "--profile", profile)
+    }
+
     if (isTRUE(dry_run)) {
       args <- c(args, "--dryrun")
     }
 
     if (isTRUE(quiet)) {
       args <- c(args, "--only-show-errors")
-    }
-
-    if (!is.null(profile)) {
-      args <- c(args, "--profile", profile)
     }
 
     if (length(extra_args) > 0) {

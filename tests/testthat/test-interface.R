@@ -107,6 +107,52 @@ test_that("prepare_copy_manifest appends source filename to destination director
   )
 })
 
+test_that("aws_copy places profile immediately after the destination path", {
+  source <- tempfile(fileext = ".fastq.gz")
+  manifest <- tempfile(fileext = ".tsv")
+  on.exit(unlink(c(source, manifest)), add = TRUE)
+  writeLines("seqdata", source)
+  writeLines(sprintf("%s\ts3://bucket/project/run-01", source), manifest)
+
+  captured_args <- NULL
+  aws_copy_env <- environment(aws_copy)
+  original_run_aws_command <- get("run_aws_command", envir = aws_copy_env)
+  assign(
+    "run_aws_command",
+    function(args) {
+      captured_args <<- args
+      list(command = c("aws", args), status = 0L, stdout = character(), stderr = character())
+    },
+    envir = aws_copy_env
+  )
+  on.exit(
+    assign("run_aws_command", original_run_aws_command, envir = aws_copy_env),
+    add = TRUE
+  )
+
+  result <- aws_copy(
+    manifest,
+    profile = "input_profile",
+    quiet = FALSE
+  )
+
+  expect_identical(
+    result$uploads[[1]]$command,
+    c("aws", captured_args)
+  )
+  expect_identical(
+    captured_args,
+    c(
+      "s3",
+      "cp",
+      normalizePath(source, winslash = "/", mustWork = TRUE),
+      sprintf("s3://bucket/project/run-01/%s", basename(source)),
+      "--profile",
+      "input_profile"
+    )
+  )
+})
+
 test_that("aws_copy tolerates a matching header row", {
   source <- tempfile(fileext = ".fastq.gz")
   manifest <- tempfile(fileext = ".tsv")
